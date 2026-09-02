@@ -318,7 +318,8 @@ Q="$QDIR"
 trap 'printf "=== ФРАГМЕНТ 4/4: %s ===\nМолодец: SIGTERM дал мне шанс прибраться за собой.\n" "$FRAG4" > "\$Q/vault2/fragment4.txt"; exit 0' TERM
 while true; do
   printf "ФАЙЛ ПОВРЕЖДЁН процессом-вредителем pest (PID %s).\nОстанови его — и данные восстановятся.\n" "\$\$" > "\$Q/vault2/fragment4.txt"
-  sleep 2
+  # sleep в фоне + wait: TERM обрабатывается сразу, а не после конца sleep
+  sleep 2 & wait \$!
 done
 EOF
 chmod 700 "$QDIR/.internals/pest.sh"
