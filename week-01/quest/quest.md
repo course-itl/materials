@@ -9,6 +9,7 @@
 ## Запуск
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/course-itl/materials/main/week-01/quest/make-quest.sh -o make-quest.sh
 bash make-quest.sh
 cd ~/quest
 cat README.txt
