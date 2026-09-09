@@ -16,13 +16,16 @@ set -u
 
 OUT="."
 SEED="${USER:-student}"
-LINES=100000
+# Имя N_LINES, а не LINES: LINES — служебная переменная шелла (высота окна терминала).
+# Интерактивный bash/zsh обновляет её сам, и в некоторых окружениях она перебивала
+# наше значение — лог получался длиной в высоту окна (30, 50 строк вместо 100000).
+N_LINES=100000
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --out)   OUT="$2"; shift 2 ;;
     --seed)  SEED="$2"; shift 2 ;;
-    --lines) LINES="$2"; shift 2 ;;
+    --lines) N_LINES="$2"; shift 2 ;;
     *) echo "Неизвестный аргумент: $1" >&2; exit 2 ;;
   esac
 done
@@ -39,7 +42,7 @@ OFFSET=$(( (16#${H:8:2}) % 13 ))
 
 # --- access.log --------------------------------------------------------------
 
-awk -v n="$LINES" -v seed="$NSEED" 'BEGIN {
+awk -v n="$N_LINES" -v seed="$NSEED" 'BEGIN {
   srand(seed)
   split("203.0.113.7 198.51.100.23 192.0.2.42 203.0.113.99 198.51.100.5", heavy, " ")
   nref = split("- https://google.com/ https://t.me/dev_channel https://news.ycombinator.com/", refs, " ")
