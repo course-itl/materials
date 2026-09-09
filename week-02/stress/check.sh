@@ -56,7 +56,20 @@ cd "$WORK" || exit 2
 echo "=== Проверка stress.sh: $STRESS ==="
 echo
 
-# --- 0. как запускать ------------------------------------------------------------
+# --- 0. формат файла и как запускать ---------------------------------------------------
+
+# Файл из Windows-редактора (BOM и/или CRLF) ломает shebang и все пути невидимыми
+# символами. Говорим об этом прямо и дальше проверяем очищенную копию.
+FMT=""
+[ "$(head -c 3 "$STRESS" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && FMT="BOM"
+grep -q $'\r' "$STRESS" && FMT="${FMT:+$FMT+}CRLF"
+if [ -n "$FMT" ]; then
+  fail v1 "файл в формате Unix: UTF-8 без BOM, переносы строк LF" "у файла $FMT (Windows-редактор): shebang «bash\\r» не найдётся, пути получат невидимый \\r. Почините: sed -i '1s/^\\xEF\\xBB\\xBF//; s/\\r\$//' stress.sh (дальше проверяю очищенную копию)"
+  CLEAN="$TMP/stress.clean.sh"
+  { if [ "${FMT#BOM}" != "$FMT" ]; then tail -c +4 "$STRESS"; else cat "$STRESS"; fi; } | tr -d '\r' > "$CLEAN"
+  chmod +x "$CLEAN"
+  STRESS="$CLEAN"
+fi
 
 RUNNER=""
 if [ -x "$STRESS" ] && [ "$(head -c 2 "$STRESS")" = "#!" ]; then

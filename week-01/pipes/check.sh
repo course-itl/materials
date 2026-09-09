@@ -49,7 +49,19 @@ for NN in 01 02 03 04 05 06 07 08; do
     continue
   fi
 
-  ( cd "$TMP" && timeout 30 bash "$SOL" ) > "$TMP/out.$NN" 2> "$TMP/err.$NN"
+  # Файл из Windows-редактора: BOM в начале и/или переносы строк CRLF. Bash видит их
+  # как невидимые символы («﻿wc: command not found», «access.log\r: No such file»).
+  # Такой файл проверяем в очищенной копии, но зачёт не ставим — файл надо починить.
+  FMT=""
+  [ "$(head -c 3 "$SOL" | od -An -tx1 | tr -d ' \n')" = "efbbbf" ] && FMT="BOM"
+  grep -q $'\r' "$SOL" && FMT="${FMT:+$FMT+}CRLF"
+  RUN="$SOL"
+  if [ -n "$FMT" ]; then
+    { if [ "${FMT#BOM}" != "$FMT" ]; then tail -c +4 "$SOL"; else cat "$SOL"; fi; } | tr -d '\r' > "$TMP/sol.$NN.sh"
+    RUN="$TMP/sol.$NN.sh"
+  fi
+
+  ( cd "$TMP" && timeout 30 bash "$RUN" ) > "$TMP/out.$NN" 2> "$TMP/err.$NN"
   RC=$?
   if [ $RC -eq 124 ]; then
     printf 'task%s  ✗  превышено время (30 с) — вечный цикл или чтение stdin?\n' "$NN"
@@ -62,12 +74,18 @@ for NN in 01 02 03 04 05 06 07 08; do
 
   GOT=$(sha256sum < "$TMP/out.$NN" | cut -d' ' -f1)
   WANT=$(cat "$ANS")
-  if [ "$GOT" = "$WANT" ]; then
+  if [ -n "$FMT" ]; then
+    if [ "$GOT" = "$WANT" ]; then VERDICT="конвейер верный, но файл в формате Windows ($FMT)"; else VERDICT="файл в формате Windows ($FMT), и конвейер тоже даёт не тот результат"; fi
+    printf 'task%s  ✗  %s: bash видит в нём невидимые символы (BOM перед первой командой, \\r в конце строк).\n' "$NN" "$VERDICT"
+    printf '           Почините и проверьте снова:  sed -i '"'"'1s/^\\xEF\\xBB\\xBF//; s/\\r$//'"'"' %s\n' "solutions/task$NN.sh"
+    printf '           (в редакторе: сохранить как UTF-8 без BOM, переносы строк LF; посмотреть формат: file solutions/task%s.sh)\n' "$NN"
+  elif [ "$GOT" = "$WANT" ]; then
     printf 'task%s  ✓\n' "$NN"
     if [ "$KIND" = "core" ]; then CORE_OK=$((CORE_OK+1)); else BONUS_OK=$((BONUS_OK+1)); fi
   else
     printf 'task%s  ✗  вывод отличается от ожидаемого; первые строки вашего вывода:\n' "$NN"
     head -3 "$TMP/out.$NN" | sed 's/^/           | /'
+    [ -s "$TMP/err.$NN" ] && head -1 "$TMP/err.$NN" | sed 's/^/           stderr: /'
   fi
 done
 
