@@ -13,8 +13,8 @@
 
 ## Полезное
 
-- Сервер курса: `89.169.167.34` — вход по SSH-ключу, инструкция в [week-01/setup/ssh-guide.md](week-01/setup/ssh-guide.md)
+- Сервер курса: `89.169.167.34` — вход по SSH-ключу, инструкция в [week-01/setup/ssh-guide.md](week-01/setup/ssh-guide.md). Работать можно прямо на нём, без установки инструментов на ноутбук: [week-01/setup/server-guide.md](week-01/setup/server-guide.md). Материалы на сервере лежат в `/opt/course/materials`.
 - Шпаргалка команд: [week-01/cheatsheet.md](week-01/cheatsheet.md); bash-скриптов: [week-02/cheatsheet.md](week-02/cheatsheet.md); Python для плюсовиков: [week-02/python/python-for-cpp.md](week-02/python/python-for-cpp.md)
 - Как писать стресс-тестировщик шаг за шагом: [week-02/stress/guide.md](week-02/stress/guide.md)
-- Автопроверки на сервере: `check-pipes` (нед. 1), `check-stress` и `check-warmups` (нед. 2)
+- Автопроверки на сервере: `check-pipes` (нед. 1), `check-stress` и `check-warmups` (нед. 2). Запускаются без аргументов из каталога недели: сначала ищут работу в текущем каталоге, затем в `~/hw-<логин>/week-NN`, затем в `~/week-NN`.
 - Проверка окружения: [week-01/setup/env-guide.md](week-01/setup/env-guide.md)

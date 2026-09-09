@@ -41,6 +41,8 @@ git config --global user.email "вы@example.com"   # та же почта, чт
 git config --global init.defaultBranch main
 ```
 
+Те же шаги 2–4 можно повторить на сервере курса, чтобы работать и сдавать прямо оттуда: у сервера будет свой ключ для GitHub и свой клон репозитория (`setup/server-guide.md`).
+
 ## 4. Клонировать свой репозиторий
 
 ```bash

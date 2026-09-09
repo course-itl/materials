@@ -62,7 +62,7 @@ week-02/
     └── sha.py
 ```
 
-Обе автопроверки работают и на ноутбуке (`bash stress/check.sh путь/к/stress.sh` и `bash python/check.sh путь/к/python`), и на сервере (`check-stress`, `check-warmups`). Зачёт идёт по прогону на сервере, потому что там единое окружение. Скопировать работу туда можно командой `scp -r week-02 course:` (см. `week-01/setup/ssh-guide.md`).
+Обе автопроверки работают и на ноутбуке (`bash stress/check.sh путь/к/stress.sh` и `bash python/check.sh путь/к/python`), и на сервере (`check-stress`, `check-warmups`). Зачёт идёт по прогону на сервере, потому что там единое окружение. Скопировать работу туда можно командой `scp -r week-02 course:` (см. `week-01/setup/ssh-guide.md`), а можно и вовсе писать её на сервере, в клоне своего репозитория (`week-01/setup/server-guide.md`): проверки ищут работу в текущем каталоге, так что достаточно зайти в `week-02/` и позвать `check-stress` без аргументов. Материалы недели на сервере лежат в `/opt/course/materials/week-02`.
 
 ## Bonus (по желанию, к «отлично»)
 

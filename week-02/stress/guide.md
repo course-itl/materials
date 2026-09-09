@@ -16,7 +16,7 @@
 
 ```bash
 mkdir -p ~/stress-lab && cd ~/stress-lab
-cp путь/к/week-02/stress/fixtures/*.py .
+cp путь/к/week-02/stress/fixtures/*.py .     # на сервере: /opt/course/materials/week-02/stress/fixtures/
 ./gen.py 1              # генератор печатает тест: n и n чисел
 ./gen.py 1 | ./ok.py    # верное решение печатает их сумму
 ```
