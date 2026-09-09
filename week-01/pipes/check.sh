@@ -84,9 +84,19 @@ echo "Данные: $CANON_LINES строк, отпечаток ${CANON_SHA:0:12
 # Проверка идёт на данных во временном каталоге, а смотреть глазами нужно на тех же
 # самых. По умолчанию временный каталог удаляется; --keep оставляет копию.
 if [ -n "$KEEP" ]; then
-  mkdir -p "$KEEP" && cp -r "$TMP/access.log" "$TMP/code" "$KEEP"/ 2>/dev/null
-  KEEP_ABS=$(cd "$KEEP" && pwd)
-  echo "  копия данных: $KEEP_ABS (access.log и code/ — ровно те, на которых шла проверка)"
+  # Копию сверяем с оригиналом: молча оставить пустой или обрезанный access.log нельзя —
+  # ученик будет считать на нём руками и получать не те числа, что показывает проверка.
+  KEPT_LINES=""
+  if mkdir -p "$KEEP" && cp -r "$TMP/access.log" "$TMP/code" "$KEEP"/; then
+    KEPT_LINES=$(wc -l < "$KEEP/access.log" 2>/dev/null | tr -d ' ')
+  fi
+  KEEP_ABS=$(cd "$KEEP" 2>/dev/null && pwd)
+  if [ "$KEPT_LINES" = "$CANON_LINES" ] && [ "$(sha256sum < "$KEEP/access.log" | cut -d' ' -f1)" = "$CANON_SHA" ]; then
+    echo "  копия данных: $KEEP_ABS (access.log — $KEPT_LINES строк, и code/ — ровно те, на которых шла проверка)"
+  else
+    echo "  Не удалось сохранить копию данных в ${KEEP_ABS:-$KEEP}: в access.log ${KEPT_LINES:-0} строк вместо $CANON_LINES." >&2
+    echo "  Проверьте, что в каталог можно писать и на диске есть место (~15 МБ); проверка продолжается без копии." >&2
+  fi
 fi
 
 # Частая путаница: рядом лежит свой access.log (сгенерированный с --lines или принесённый
