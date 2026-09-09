@@ -5,6 +5,7 @@
 ## Недели
 
 - [Неделя 1 — Linux и терминал: дом разработчика](week-01/README.md)
+- [Неделя 2 — Bash-скрипты: стресс-тестировщик](week-02/README.md)
 
 ## Как устроена сдача
 
@@ -13,5 +14,7 @@
 ## Полезное
 
 - Сервер курса: `89.169.167.34` — вход по SSH-ключу, инструкция в [week-01/setup/ssh-guide.md](week-01/setup/ssh-guide.md)
-- Шпаргалка команд: [week-01/cheatsheet.md](week-01/cheatsheet.md)
+- Шпаргалка команд: [week-01/cheatsheet.md](week-01/cheatsheet.md); bash-скриптов: [week-02/cheatsheet.md](week-02/cheatsheet.md); Python для плюсовиков: [week-02/python/python-for-cpp.md](week-02/python/python-for-cpp.md)
+- Как писать стресс-тестировщик шаг за шагом: [week-02/stress/guide.md](week-02/stress/guide.md)
+- Автопроверки на сервере: `check-pipes` (нед. 1), `check-stress` и `check-warmups` (нед. 2)
 - Проверка окружения: [week-01/setup/env-guide.md](week-01/setup/env-guide.md)
