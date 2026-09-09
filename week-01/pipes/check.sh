@@ -31,8 +31,25 @@ trap 'rm -rf "$TMP"' EXIT
 
 echo "Генерирую канонические данные (сид: $USER)..."
 bash "$SCRIPT_DIR/make-logs.sh" --seed "$USER" --out "$TMP" >/dev/null
-CANON_LINES=$(wc -l < "$TMP/access.log" | tr -d ' ')
-CANON_SHA=$(sha256sum < "$TMP/access.log" | cut -d' ' -f1)
+CANON_LINES=$(wc -l < "$TMP/access.log" 2>/dev/null | tr -d ' ')
+CANON_SHA=$(sha256sum < "$TMP/access.log" 2>/dev/null | cut -d' ' -f1)
+
+# Эталоны посчитаны на полном логе (100 000 строк). Если данные получились другие —
+# сравнивать бессмысленно: все задачи покажут «вывод отличается», и виновата будет
+# не работа ученика. Лучше остановиться и сказать об этом прямо.
+EXPECT_LINES=100000
+if [ ! -s "$TMP/access.log" ] || [ ! -d "$TMP/code" ]; then
+  echo "Не удалось сгенерировать данные (нет access.log или code/). Скажите преподавателю." >&2
+  exit 2
+fi
+if [ "$CANON_LINES" != "$EXPECT_LINES" ]; then
+  echo "Данные сгенерированы не полностью: $CANON_LINES строк вместо $EXPECT_LINES." >&2
+  echo "Эталонные ответы посчитаны на полном логе, поэтому проверять смысла нет." >&2
+  echo "Так бывает, если запускать не установленную команду check-pipes, а свою копию check.sh" >&2
+  echo "рядом с изменённым make-logs.sh (например, с --lines). Скажите преподавателю." >&2
+  exit 2
+fi
+echo "Данные: $CANON_LINES строк, отпечаток ${CANON_SHA:0:12}"
 
 # Частая путаница: рядом лежит свой access.log (сгенерированный с --lines или принесённый
 # с ноутбука), на нём руками получаются одни числа, а проверка показывает другие.
