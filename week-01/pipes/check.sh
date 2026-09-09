@@ -2,6 +2,7 @@
 # check.sh — автопроверка однострочников недели 1. Запускается НА СЕРВЕРЕ курса.
 # Использование:
 #   bash check.sh [каталог-с-решениями]     # по умолчанию ./solutions
+#   bash check.sh --keep [КАТАЛОГ]          # + оставить данные, на которых шла проверка
 #
 # Как работает: генерирует каноническую версию ваших данных (сид = ваш логин),
 # прогоняет каждое решение и сравнивает хеш вывода с эталонным. Эталоны
@@ -9,7 +10,21 @@
 
 set -u
 
-SOLDIR="${1:-./solutions}"
+SOLDIR=""
+KEEP=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --keep)
+      KEEP="./check-data"
+      case "${2:-}" in -*|"") ;; *) KEEP="$2"; shift ;; esac
+      shift ;;
+    --keep=*) KEEP="${1#--keep=}"; shift ;;
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+    -*) echo "Неизвестный аргумент: $1" >&2; exit 2 ;;
+    *) [ -n "$SOLDIR" ] || SOLDIR="$1"; shift ;;
+  esac
+done
+SOLDIR="${SOLDIR:-./solutions}"
 ANSDIR="${ANSWERS_DIR:-/opt/course/week-01/answers/$USER}"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
@@ -65,6 +80,14 @@ if [ "$CANON_LINES" != "$EXPECT_LINES" ]; then
   exit 2
 fi
 echo "Данные: $CANON_LINES строк, отпечаток ${CANON_SHA:0:12}"
+
+# Проверка идёт на данных во временном каталоге, а смотреть глазами нужно на тех же
+# самых. По умолчанию временный каталог удаляется; --keep оставляет копию.
+if [ -n "$KEEP" ]; then
+  mkdir -p "$KEEP" && cp -r "$TMP/access.log" "$TMP/code" "$KEEP"/ 2>/dev/null
+  KEEP_ABS=$(cd "$KEEP" && pwd)
+  echo "  копия данных: $KEEP_ABS (access.log и code/ — ровно те, на которых шла проверка)"
+fi
 
 # Частая путаница: рядом лежит свой access.log (сгенерированный с --lines или принесённый
 # с ноутбука), на нём руками получаются одни числа, а проверка показывает другие.
@@ -140,5 +163,8 @@ echo
 echo "Итог: core $CORE_OK/6, доп. $BONUS_OK/2"
 if [ "$CORE_OK" -eq 6 ]; then
   echo "Core сдан. Осталось закоммитить solutions/ в свой репозиторий (урок 5)."
+elif [ -z "$KEEP" ]; then
+  echo "Чтобы посмотреть глазами на те же данные: check-pipes --keep (оставит их в ./check-data)"
+  echo "или make-logs в текущем каталоге — на сервере он даёт ровно эти данные."
 fi
 [ "$CORE_OK" -eq 6 ]
