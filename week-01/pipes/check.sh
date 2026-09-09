@@ -31,6 +31,21 @@ trap 'rm -rf "$TMP"' EXIT
 
 echo "Генерирую канонические данные (сид: $USER)..."
 bash "$SCRIPT_DIR/make-logs.sh" --seed "$USER" --out "$TMP" >/dev/null
+CANON_LINES=$(wc -l < "$TMP/access.log" | tr -d ' ')
+CANON_SHA=$(sha256sum < "$TMP/access.log" | cut -d' ' -f1)
+
+# Частая путаница: рядом лежит свой access.log (сгенерированный с --lines или принесённый
+# с ноутбука), на нём руками получаются одни числа, а проверка показывает другие.
+# Проверка свой файл никогда не использует — предупреждаем, если он отличается.
+for f in ./access.log "$SOLDIR/../access.log"; do
+  [ -f "$f" ] || continue
+  if [ "$(sha256sum < "$f" | cut -d' ' -f1)" != "$CANON_SHA" ]; then
+    echo "· Внимание: $f ($(wc -l < "$f" | tr -d ' ') строк) отличается от канонических данных ($CANON_LINES строк)."
+    echo "  Проверка его не использует, а ручные прогоны на нём дадут другие числа. Чтобы совпадало —"
+    echo "  пересоздайте его без --lines: cd $(dirname "$f") && make-logs"
+  fi
+  break
+done
 
 CORE_OK=0
 BONUS_OK=0
