@@ -29,8 +29,23 @@ fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
+# Генератор берём рядом с собой, а если рядом его нет — из установленных материалов курса.
+# Это важно: запущенная копия check.sh без make-logs.sh рядом раньше молча сравнивала
+# ваши решения с пустыми данными и показывала ✗ по всем задачам.
+INSTALLED=/opt/course/materials/week-01/pipes
+MAKELOGS="$SCRIPT_DIR/make-logs.sh"
+[ -f "$MAKELOGS" ] || MAKELOGS="$INSTALLED/make-logs.sh"
+if [ ! -f "$MAKELOGS" ]; then
+  echo "Не найден make-logs.sh (ни рядом с check.sh, ни в $INSTALLED)." >&2
+  echo "На сервере курса запускайте установленную команду: check-pipes" >&2
+  exit 2
+fi
+if [ "$SCRIPT_DIR" != "$INSTALLED" ] && [ -d "$INSTALLED" ]; then
+  echo "· Вы запустили свою копию check.sh. На сервере есть команда check-pipes — она всегда свежая."
+fi
+
 echo "Генерирую канонические данные (сид: $USER)..."
-bash "$SCRIPT_DIR/make-logs.sh" --seed "$USER" --out "$TMP" >/dev/null
+bash "$MAKELOGS" --seed "$USER" --out "$TMP" >/dev/null
 CANON_LINES=$(wc -l < "$TMP/access.log" 2>/dev/null | tr -d ' ')
 CANON_SHA=$(sha256sum < "$TMP/access.log" 2>/dev/null | cut -d' ' -f1)
 
