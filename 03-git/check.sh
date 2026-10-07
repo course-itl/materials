@@ -11,12 +11,13 @@
 # каталоге. Работает и на ноутбуке, и на сервере курса
 # (bash /opt/course/materials/03-git/check.sh). Нужны: git 2.32+, python3.
 #
-# Вывод целиком вставляется в 03-git/report.md. Код выхода 0 = все core-задачи сделаны.
+# Зачёт снимается с сервера курса: преподаватель запускает этот же скрипт под учёткой ученика.
+# Код выхода 0 = все core-задачи сделаны.
 
 set -u
 
 ROOT="${1:-$HOME/git-practice}"
-case "$ROOT" in -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;; esac
+case "$ROOT" in -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;; esac
 
 if [ ! -d "$ROOT" ]; then
   echo "Каталог тренажёра не найден: $ROOT" >&2
@@ -407,7 +408,7 @@ check_bonus2
 echo
 echo "Итог: core $CORE_OK/$CORE_ALL задач; bonus: B1 $B1, B2 $B2"
 if [ "$CORE_OK" -eq "$CORE_ALL" ]; then
-  echo "Тренажёр пройден. Вставьте этот вывод целиком в 03-git/report.md."
+  echo "Тренажёр пройден. Зачёт по задачам 1–7 снимается с ~/git-practice на сервере курса."
 else
   echo "Под каждым ✗ написано, что не так. После правок запустите проверку снова."
 fi
