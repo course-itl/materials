@@ -4,8 +4,9 @@
 
 ## Недели
 
-- [Неделя 1 — Linux и терминал: дом разработчика](week-01/README.md)
-- [Неделя 2 — Bash-скрипты: стресс-тестировщик](week-02/README.md)
+- [Неделя 1 — Linux и терминал: дом разработчика](01-shell/README.md)
+- [Неделя 2 — Bash-скрипты: стресс-тестировщик](02-shell/README.md)
+- [Неделя 3 — Git: альбом снимков, а не заклинания](03-git/README.md)
 
 ## Как устроена сдача
 
@@ -13,8 +14,8 @@
 
 ## Полезное
 
-- Сервер курса: `89.169.167.34` — вход по SSH-ключу, инструкция в [week-01/setup/ssh-guide.md](week-01/setup/ssh-guide.md). Работать можно прямо на нём, без установки инструментов на ноутбук: [week-01/setup/server-guide.md](week-01/setup/server-guide.md). Материалы на сервере лежат в `/opt/course/materials`.
-- Шпаргалка команд: [week-01/cheatsheet.md](week-01/cheatsheet.md); bash-скриптов: [week-02/cheatsheet.md](week-02/cheatsheet.md); Python для плюсовиков: [week-02/python/python-for-cpp.md](week-02/python/python-for-cpp.md)
-- Как писать стресс-тестировщик шаг за шагом: [week-02/stress/guide.md](week-02/stress/guide.md)
-- Автопроверки на сервере: `check-pipes` (нед. 1), `check-stress` и `check-warmups` (нед. 2). Запускаются без аргументов из каталога недели: сначала ищут работу в текущем каталоге, затем в `~/hw-<логин>/week-NN`, затем в `~/week-NN`.
-- Проверка окружения: [week-01/setup/env-guide.md](week-01/setup/env-guide.md)
+- Сервер курса: `89.169.167.34` — вход по SSH-ключу, инструкция в [01-shell/setup/ssh-guide.md](01-shell/setup/ssh-guide.md). Работать можно прямо на нём, без установки инструментов на ноутбук: [01-shell/setup/server-guide.md](01-shell/setup/server-guide.md). Материалы на сервере лежат в `/opt/course/materials`.
+- Шпаргалка команд: [01-shell/cheatsheet.md](01-shell/cheatsheet.md); bash-скриптов: [02-shell/cheatsheet.md](02-shell/cheatsheet.md); Python для плюсовиков: [02-shell/python/python-for-cpp.md](02-shell/python/python-for-cpp.md)
+- Как писать стресс-тестировщик шаг за шагом: [02-shell/stress/guide.md](02-shell/stress/guide.md)
+- Автопроверки на сервере: `check-pipes` (нед. 1), `check-stress` и `check-warmups` (нед. 2); тренажёр недели 3 проверяет `check.sh` из каталога недели (на сервере `bash /opt/course/materials/03-git/check.sh`), он смотрит на `~/git-practice`. Запускаются без аргументов из каталога недели: сначала ищут работу в текущем каталоге, затем в `~/hw-<логин>/<каталог недели>` (`01-shell`, `02-shell`; старые имена `week-01`, `week-02` тоже работают), затем в `~/<каталог недели>`.
+- Проверка окружения: [01-shell/setup/env-guide.md](01-shell/setup/env-guide.md)
