@@ -88,9 +88,9 @@ cd "$(dirname "$0")"
 status=0
 check() { # НАЗВАНИЕ ОЖИДАЕМОЕ ПОЛУЧЕННОЕ
   if [ "$2" = "$3" ]; then
-    echo "✓ $1"
+    echo "OK   $1"
   else
-    echo "✗ $1"
+    echo "FAIL $1"
     echo "    ожидалось: $(printf '%s' "$2" | tr '\n' '|')"
     echo "    получено:  $(printf '%s' "$3" | tr '\n' '|')"
     status=1
@@ -173,9 +173,9 @@ has() { # НАЗВАНИЕ ВВОД ОЖИДАЕМАЯ-СТРОКА
   local out
   out=$(printf '%b' "$2" | python3 stats.py 2>&1) || true
   if printf '%s\n' "$out" | grep -qx -- "$3"; then
-    echo "✓ $1"
+    echo "OK   $1"
   else
-    echo "✗ $1 (в выводе нет строки «$3»)"
+    echo "FAIL $1 (в выводе нет строки «$3»)"
     status=1
   fi
 }
@@ -269,9 +269,9 @@ cd "$(dirname "$0")"
 expected=$'host -> example.com\nport -> 8080\nname -> demo'
 actual=$(printf '# config\nhost = example.com\n\nport=8080\n  name =  demo \n' | python3 ini.py 2>&1) || true
 if [ "$expected" = "$actual" ]; then
-  echo "✓ parser"
+  echo "OK   parser"
 else
-  echo "✗ parser"
+  echo "FAIL parser"
   printf '%s\n' "$actual" | sed 's/^/    /'
   exit 1
 fi
@@ -371,7 +371,7 @@ mkdir -p out
 printf '3 1 2 1\n' | python3 stats.py > out/actual.txt 2>&1 || true
 status=0
 for line in 'count: 4' 'sum: 7' 'min: 1' 'max: 3' 'mean: 1.75'; do
-  if grep -qx -- "$line" out/actual.txt; then echo "✓ $line"; else echo "✗ $line"; status=1; fi
+  if grep -qx -- "$line" out/actual.txt; then echo "OK   $line"; else echo "FAIL $line"; status=1; fi
 done
 exit $status
 EOF

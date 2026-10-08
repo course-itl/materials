@@ -31,15 +31,15 @@ export GIT_OPTIONAL_LOCKS=0
 
 # Объекты, которые создаёт setup.sh. Хеши у всех одинаковые (фиксированные автор и даты),
 # поэтому по ним можно сверять и исходную историю, и содержимое файлов.
-STAGING_ROOT=c6e7b7951f81eabd5d1c2cb6feeefdba6bc2c99d     # topwords: first version
-CONFLICT_MAIN=7bddf790c16e585ef669f0cecc901f6aea709e49    # readme: empty input is fine (вершина main)
-CONFLICT_FEATURE=c312300bf358cf87563f11c2d7d96f585e6eb563 # stats: add median (до rebase)
-MESSY_MAIN=04ab41da0029dcde2ea963004ee8c2bb40fe18c9       # init: readme and tests
-MESSY_TREE=a9b68c1a42a5ef1c37e74a3f516f466536f55841       # дерево вершины feature до уборки
-UNDO_ROOT=ee8d6699f0185c15c7b9cdea5daf2504f88ef1db        # stats: count, sum, min, max
-UNDO_CULPRIT=cb23d1926d89191f5f103ca81f07b7a76e713abd     # stats: speed up mean with integer math
+STAGING_ROOT=bb4a271d44c219ddf328784783d19bcc6df21c6f     # topwords: first version
+CONFLICT_MAIN=bfb8514fed14223c9d47a26bd5e940e0cc8c1275    # readme: empty input is fine (вершина main)
+CONFLICT_FEATURE=d04b783f5edf2bf4315aa4a8226bd9b276a87f39 # stats: add median (до rebase)
+MESSY_MAIN=df63a65a9f2bb346077161cbf531e852bf574081       # init: readme and tests
+MESSY_TREE=446db62c3543e1da371708fdc87d15e8a9a69a69       # дерево вершины feature до уборки
+UNDO_ROOT=42dba19a77cfcb64091a57b59c193cdc0a185e55        # stats: count, sum, min, max
+UNDO_CULPRIT=d0c66ea771277388daf650ae06296ccb06e6f8c8     # stats: speed up mean with integer math
 UNDO_GEN_BLOB=5a5efc8fe1a5dfbc5cd4e5b90a7ef65521ed7732    # содержимое удалённого gen.py
-UNDO_WIP=972c9b043efd5edbc6ba5490a6755e29baf74d5f         # stats: histogram experiment (ветка wip)
+UNDO_WIP=ea7f1248861ca80f0a6a06cd585ae4de91863a3d         # stats: histogram experiment (ветка wip)
 BISECT_CULPRIT=d1169f13ff4e38171d14562a9e680322efcb67f4   # day 23
 
 if [ -t 1 ]; then
@@ -48,15 +48,15 @@ else
   C_OK=""; C_ERR=""; C_INFO=""; C_OFF=""
 fi
 
-CORE_OK=0; CORE_ALL=0; B1="—"; B2="—"
+CORE_OK=0; CORE_ALL=0; B1="не делали"; B2="не делали"
 T_OK=1
 REPO=""
 
 g()    { git --no-pager -C "$REPO" "$@"; }
 task() { printf '\n-- %s\n' "$1"; T_OK=1; }
-ok()   { printf '%s✓%s %s\n' "$C_OK" "$C_OFF" "$1"; }
-bad()  { printf '%s✗%s %s\n    → %s\n' "$C_ERR" "$C_OFF" "$1" "$2"; T_OK=0; }
-note() { printf '%s·%s %s\n' "$C_INFO" "$C_OFF" "$1"; }
+ok()   { printf '%sOK%s   %s\n' "$C_OK" "$C_OFF" "$1"; }
+bad()  { printf '%sFAIL%s %s\n     -> %s\n' "$C_ERR" "$C_OFF" "$1" "$2"; T_OK=0; }
+note() { printf '%sINFO%s %s\n' "$C_INFO" "$C_OFF" "$1"; }
 core_done() { CORE_ALL=$((CORE_ALL+1)); [ "$T_OK" = 1 ] && CORE_OK=$((CORE_OK+1)); return 0; }
 
 # repo_ok — репозиторий $REPO на месте
@@ -83,7 +83,10 @@ tests_at() {
   local d; d=$(extract "$1") || return 99
   ( cd "$d" && bash test.sh 2>/dev/null )
 }
-failed_lines() { printf '%s' "$1" | grep '✗' | head -2 | tr '\n' ';' | sed 's/;$//'; }
+# failed_lines ВЫВОД — первые две строки FAIL из вывода test.sh
+failed_lines() { printf '%s' "$1" | grep '^FAIL' | head -2 | tr '\n' ';' | sed 's/;$//'; }
+# marks ВЫВОД — метки OK/FAIL из вывода test.sh одной строкой, например «OK FAIL»
+marks() { printf '%s\n' "$1" | awk '$1 == "OK" || $1 == "FAIL" {printf "%s ", $1}' | sed 's/ $//'; }
 touched() { g diff-tree --no-commit-id --name-only -r "$1" | tr '\n' ' ' | sed 's/ $//'; }
 in_progress() { # merge/rebase/cherry-pick/revert не завершён
   local gd; gd=$(g rev-parse --git-dir)
@@ -123,7 +126,7 @@ check_task1() {
   task "1. Хирургический коммит (staging/)"
   REPO=$ROOT/staging; repo_ok || return
   have_commit "$STAGING_ROOT" || { not_ours; return; }
-  local n root f1 f2 out1 out2 rc2
+  local n root f1 f2 out1 out2 rc2 m1 m2
   root=$(g rev-list --max-parents=0 HEAD)
   n=$(g rev-list --count HEAD)
   if [ "$root" != "$STAGING_ROOT" ]; then
@@ -157,11 +160,11 @@ check_task1() {
     ok "второй новый коммит — опция числа слов (без DEBUG)"
   fi
   out1=$(tests_at HEAD~1); out2=$(tests_at HEAD); rc2=$?
-  if [ "$rc2" = 0 ] && [ "$(printf '%s\n' "$out1" | sed -n '1p' | cut -c1)" = "✓" ] && \
-     [ "$(printf '%s\n' "$out1" | sed -n '2p' | cut -c1)" = "✗" ]; then
-    ok "bash test.sh: на HEAD~1 ✓✗, на HEAD ✓✓"
+  m1=$(marks "$out1"); m2=$(marks "$out2")
+  if [ "$rc2" = 0 ] && [ "$m1" = "OK FAIL" ]; then
+    ok "bash test.sh: на HEAD~1 OK FAIL, на HEAD OK OK"
   else
-    bad "bash test.sh: на HEAD~1 ✓✗, на HEAD ✓✓" "на HEAD~1: $(printf '%s' "$out1" | cut -c1 | tr '\n' ' '); на HEAD: $(printf '%s' "$out2" | cut -c1 | tr '\n' ' ')"
+    bad "bash test.sh: на HEAD~1 OK FAIL, на HEAD OK OK" "на HEAD~1: ${m1:-нет вывода}; на HEAD: ${m2:-нет вывода}"
   fi
   status_check main
 }
@@ -180,17 +183,17 @@ check_task2() {
     if tests_at "$m" >/dev/null; then good=$m; break; fi
   done
   if [ -n "$good" ]; then
-    ok "merge: merge-коммит feature → main найден (${good:0:7}), тесты на нём проходят"
+    ok "merge: merge-коммит feature -> main найден (${good:0:7}), тесты на нём проходят"
   elif [ -n "$found" ]; then
-    bad "merge: merge-коммит feature → main найден, тесты на нём проходят" "merge-коммит ${found:0:7} есть, но bash test.sh на нём не проходит: конфликт разрешён не до конца (median на пустом вводе?); повторите merge и перед откатом поставьте git tag merged"
+    bad "merge: merge-коммит feature -> main найден, тесты на нём проходят" "merge-коммит ${found:0:7} есть, но bash test.sh на нём не проходит: конфликт разрешён не до конца (median на пустом вводе?); повторите merge и перед откатом поставьте git tag merged"
   else
-    bad "merge: merge-коммит feature → main найден, тесты на нём проходят" "не вижу коммита с родителями «readme: empty input is fine» и «stats: add median»: на main выполните git merge feature, разрешите конфликт, закоммитьте и поставьте git tag merged, прежде чем откатывать"
+    bad "merge: merge-коммит feature -> main найден, тесты на нём проходят" "не вижу коммита с родителями «readme: empty input is fine» и «stats: add median»: на main выполните git merge feature, разрешите конфликт, закоммитьте и поставьте git tag merged, прежде чем откатывать"
   fi
   parent=$(g rev-parse -q --verify main~1 2>/dev/null); subj=$(g log -1 --format=%s main 2>/dev/null)
   if [ "$parent" = "$CONFLICT_MAIN" ] && [ "$subj" = "stats: add median" ]; then
     ok "rebase: main — прямая линия, «stats: add median» (новый хеш) поверх «readme: empty input is fine»"
   else
-    bad "rebase: main — прямая линия, «stats: add median» поверх «readme: empty input is fine»" "сейчас вершина main: $(g log --oneline -1 main); ожидается переложенный коммит сразу над «readme: empty input is fine» (reset --hard ORIG_HEAD → git switch feature → git rebase main → git switch main → git merge feature)"
+    bad "rebase: main — прямая линия, «stats: add median» поверх «readme: empty input is fine»" "сейчас вершина main: $(g log --oneline -1 main); ожидается переложенный коммит сразу над «readme: empty input is fine» (reset --hard ORIG_HEAD -> git switch feature -> git rebase main -> git switch main -> git merge feature)"
   fi
   if [ "$(g rev-parse main)" = "$(g rev-parse -q --verify feature)" ]; then
     ok "feature и main указывают на один коммит (fast-forward выполнен)"
@@ -247,17 +250,17 @@ check_task4() {
   [ -d "$ROOT/undo-origin.git" ] || note "undo-origin.git рядом не найден: «отправлено в origin» проверяю по origin/main"
   local out
   if g merge-base --is-ancestor "$UNDO_CULPRIT" main 2>/dev/null; then
-    ok "виновник cb23d19 остался в истории main (история не переписана)"
+    ok "виновник d0c66ea остался в истории main (история не переписана)"
   else
-    bad "виновник cb23d19 остался в истории main (история не переписана)" "main больше не содержит cb23d19 — был reset? верните: git reset --hard origin/main, затем git revert cb23d19"
+    bad "виновник d0c66ea остался в истории main (история не переписана)" "main больше не содержит d0c66ea — был reset? верните: git reset --hard origin/main, затем git revert d0c66ea"
   fi
   REVERT=$(g log main --format=%H --grep="This reverts commit $UNDO_CULPRIT" 2>/dev/null | tail -1)
   [ -n "$REVERT" ] || REVERT=$(g log main --format=%H --grep='^Revert "stats: speed up mean' 2>/dev/null | tail -1)
   if [ -n "$REVERT" ]; then ok "в main есть коммит-revert виновника (${REVERT:0:7})"
-  else bad "в main есть коммит-revert виновника" "git revert cb23d19 (сообщение оставить как есть)"; fi
+  else bad "в main есть коммит-revert виновника" "git revert d0c66ea (сообщение оставить как есть)"; fi
   out=$(tests_at main)
-  if [ $? = 0 ]; then ok "bash test.sh на main: пять галочек"
-  else bad "bash test.sh на main: пять галочек" "$(failed_lines "$out")"; fi
+  if [ $? = 0 ]; then ok "bash test.sh на main: все пять проверок проходят"
+  else bad "bash test.sh на main: все пять проверок проходят" "$(failed_lines "$out")"; fi
   if [ -n "$REVERT" ] && in_origin "$REVERT"; then ok "revert отправлен в origin"
   else bad "revert отправлен в origin" "git push; проверка: git status -sb без [ahead]"; fi
 }
@@ -274,7 +277,7 @@ check_task5() {
     ok "gen.py возвращён отдельным коммитом (${restore:0:7})"
   else
     restore=""
-    bad "gen.py возвращён отдельным коммитом" "git log --oneline -- gen.py → коммит удаления; git restore --source=<хеш>^ -- gen.py; git add, git commit"
+    bad "gen.py возвращён отдельным коммитом" "git log --oneline -- gen.py -> коммит удаления; git restore --source=<хеш>^ -- gen.py; git add, git commit"
   fi
   if [ "$blob" = "$UNDO_GEN_BLOB" ]; then
     ok "содержимое gen.py совпадает с тем, что было удалено"
@@ -308,9 +311,9 @@ check_task6() {
   else bad "git stash list пуст" "в stash что-то осталось: git stash pop (или git stash drop)"; fi
   log=$(my_reflog)
   if printf '%s\n' "$log" | grep -q 'moving from main to wip' && printf '%s\n' "$log" | grep -q 'moving from wip to main'; then
-    ok "переход main → wip → main есть в reflog"
+    ok "переход main -> wip -> main есть в reflog"
   else
-    bad "переход main → wip → main есть в reflog" "в git reflog нет ваших переключений на wip и обратно (записи setup.sh не считаются)"
+    bad "переход main -> wip -> main есть в reflog" "в git reflog нет ваших переключений на wip и обратно (записи setup.sh не считаются)"
   fi
   for h in $(g fsck --unreachable --no-progress 2>/dev/null | awk '$1 == "unreachable" && $2 == "commit" {print $3}'); do
     s=$(g log -1 --format=%s "$h" 2>/dev/null)
@@ -353,7 +356,7 @@ check_bonus1() {
     steps=$(( $(grep -cE '^# (good|bad): ' "$log") - 2 ))   # первые две пометки — границы, остальные — шаги
     ok "bisect.log: виновник d1169f1 (day 23), шагов: $steps"
   else
-    bad "bisect.log: виновник d1169f1 (day 23)" "в журнале нет строки «first bad commit: [d1169f1…]»; доведите bisect до конца и сохраните журнал заново"
+    bad "bisect.log: виновник d1169f1 (day 23)" "в журнале нет строки «first bad commit: [d1169f1...]»; доведите bisect до конца и сохраните журнал заново"
     return
   fi
   if [ -f "$(g rev-parse --git-path BISECT_LOG)" ]; then
@@ -410,6 +413,6 @@ echo "Итог: core $CORE_OK/$CORE_ALL задач; bonus: B1 $B1, B2 $B2"
 if [ "$CORE_OK" -eq "$CORE_ALL" ]; then
   echo "Тренажёр пройден. Зачёт по задачам 1–7 снимается с ~/git-practice на сервере курса."
 else
-  echo "Под каждым ✗ написано, что не так. После правок запустите проверку снова."
+  echo "Под каждым FAIL написано, что не так. После правок запустите проверку снова."
 fi
 [ "$CORE_OK" -eq "$CORE_ALL" ]
